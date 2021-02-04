@@ -15,14 +15,14 @@ Window {
         QMLPlayer{
             anchors.fill: parent
             Component.onCompleted: start()
-            Timer{
-                repeat: true
-                interval: 10
-                running: true
-                onTriggered: {
-                    parent.update()
-                }
-            }
+//            Timer{
+//                repeat: true
+//                interval: 10
+//                running: true
+//                onTriggered: {
+//                    parent.update()
+//                }
+//            }
         }
     }
 }

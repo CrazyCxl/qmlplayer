@@ -49,9 +49,8 @@ int Player::open(const std::string &path)
         break;
     }
 
-    static std::thread t(&Player::readframe, this);
-//    t.join();
-
+    readFThread = make_unique<thread>(&Player::readframe, this);
+    readFThread->detach();
     return 0;
 }
 
@@ -83,27 +82,17 @@ void Player::readframe()
         if(pPacket->stream_index == videoDecoder->getStreamIndex()){
             if(avcodec_send_packet(videoDecoder->getAvCodecContext(), pPacket)){
                 logger()<<"error send packet!";
-                exit(0);
+                continue;
             }
             if(!avcodec_receive_frame(videoDecoder->getAvCodecContext(), pFrame)){
-//                printf(
-//                    "Frame %c (%d) pts %d dts %d key_frame %d [coded_picture_number %d, format %d]\n",
-//                    av_get_picture_type_char(pFrame->pict_type),
-//                    videoDecoder->getAvCodecContext()->frame_number,
-//                    pFrame->pts,
-//                    pFrame->pkt_dts,
-//                    pFrame->key_frame,
-//                    pFrame->coded_picture_number,
-//                    pFrame->format
-//                );
                 sws_scale(sws_conotext,pFrame->data,pFrame->linesize,0,height,yuvFrame->data,yuvFrame->linesize);
                 if(callBack)
                     callBack->rowVideoData(yuvFrame->data[0],yuvFrame->width,yuvFrame->height);
             }
         }
+        av_packet_unref(pPacket);
     }
 
-    av_packet_unref(pPacket);
     sws_freeContext(sws_conotext);
     av_frame_free(&yuvFrame);
     avformat_close_input(&pFormatContext);

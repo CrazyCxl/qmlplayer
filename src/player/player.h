@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <functional>
-#include <share.h>
+#include <thread>
 #include "video/videodecoder.h"
 #include "../utils/logger.h"
 
@@ -30,6 +30,7 @@ private:
     unique_ptr<VideoDecoder> videoDecoder;
     PlayerCallBack *callBack;
     AVFormatContext *pFormatContext;
+    unique_ptr<thread>  readFThread;
 };
 
 #endif // PLAYER_H

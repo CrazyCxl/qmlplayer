@@ -1,11 +1,16 @@
 ﻿#include "qmlplayer.h"
 #include <QPainter>
+#include <QTimer>
 
 QMLPlayer::QMLPlayer(QQuickItem *parent)
     :QQuickPaintedItem(parent)
 {
     player = new Player();
     player->setCallBack(this);
+    QTimer *timer = new QTimer(this);
+    timer->setInterval(20);
+    connect(timer,SIGNAL(timeout()),this,SLOT(update()));
+    timer->start();
 }
 
 QMLPlayer::~QMLPlayer()
@@ -15,7 +20,8 @@ QMLPlayer::~QMLPlayer()
 
 void QMLPlayer::paint(QPainter *painter)
 {
-    painter->drawImage(QPoint(0,0),this->image);
+    QImage img = image.scaled(this->width(),this->height());
+    painter->drawImage(QPoint(0,0),img);
 }
 
 void QMLPlayer::rowVideoData(unsigned char *data, int width, int height)
