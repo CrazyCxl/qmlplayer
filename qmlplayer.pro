@@ -16,11 +16,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #win32:{
     INCLUDEPATH += $$PWD/third/ffmpeg/include
     LIBS += -L$$PWD/third/ffmpeg/lib
-    LIBS += -lavcodec
+    LIBS += -lavcodec -lavformat -lavutil -lswscale
 #}
 
 SOURCES += \
-        src/main.cpp
+        src/main.cpp \
+        src/player/player.cpp \
+        src/player/qmlplayer.cpp \
+        src/player/video/videodecoder.cpp
 
 RESOURCES += qml/qml.qrc
 
@@ -37,3 +40,9 @@ QML_DESIGNER_IMPORT_PATH =
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+HEADERS += \
+    src/player/player.h \
+    src/player/qmlplayer.h \
+    src/player/video/videodecoder.h \
+    src/utils/logger.h

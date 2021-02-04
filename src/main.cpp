@@ -1,9 +1,6 @@
 ﻿#include <QGuiApplication>
 #include <QQmlApplicationEngine>
-
-extern "C"{
-    #include <libavcodec/avcodec.h>
-}
+#include "player/qmlplayer.h"
 
 int main(int argc, char *argv[])
 {
@@ -11,6 +8,9 @@ int main(int argc, char *argv[])
 
     QGuiApplication app(argc, argv);
 
+//    Player *player = new Player();
+
+    qmlRegisterType<QMLPlayer>("cxl.custom",1,0,"QMLPlayer");
     QQmlApplicationEngine engine;
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
@@ -21,4 +21,5 @@ int main(int argc, char *argv[])
     engine.load(url);
 
     return app.exec();
+    return 0;
 }
