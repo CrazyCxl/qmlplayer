@@ -13,12 +13,14 @@ class PlayerCallBack
 {
 public:
     virtual void rowVideoData(unsigned char *data,int width,int height) = 0;
+    virtual void rowAudioData(unsigned char *data,unsigned int size) = 0;
 };
 
 class Player
 {
 public:
     Player();
+    ~Player();
     int open(const std::string &path);
 
     void setCallBack(PlayerCallBack *value);
@@ -28,6 +30,7 @@ private:
 
 private:
     unique_ptr<VideoDecoder> videoDecoder;
+    unique_ptr<VideoDecoder> audioDecoder;
     PlayerCallBack *callBack;
     AVFormatContext *pFormatContext;
     unique_ptr<thread>  readFThread;

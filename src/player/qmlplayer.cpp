@@ -26,7 +26,12 @@ void QMLPlayer::paint(QPainter *painter)
 
 void QMLPlayer::rowVideoData(unsigned char *data, int width, int height)
 {
-    image = QImage(data, width, height, QImage::Format_RGBA8888);
+    image = QImage(data, width, height, QImage::Format_RGB888);
+}
+
+void QMLPlayer::rowAudioData(unsigned char *data, unsigned int size)
+{
+    audioOutputIO->write((const char *)data,size);
 }
 
 QString QMLPlayer::getUrl() const
@@ -41,5 +46,17 @@ void QMLPlayer::setUrl(const QString &value)
 
 void QMLPlayer::start()
 {
+    QAudioFormat format;
+    // Set up the format, eg.
+    format.setSampleRate(48000);
+    format.setChannelCount(2);
+    format.setSampleSize(16);
+    format.setCodec("audio/pcm");
+    format.setByteOrder(QAudioFormat::LittleEndian);
+    format.setSampleType(QAudioFormat::UnSignedInt);
+
+    QAudioOutput *audio_output = new QAudioOutput(format,this);
+    audioOutputIO = (audio_output)->start();
+    int size = audio_output->periodSize();
     player->open("C:\\Users\\cxl\\Videos\\VID_20200416_211528.mp4");
 }

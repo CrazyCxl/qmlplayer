@@ -3,6 +3,7 @@
 
 #include <QQuickPaintedItem>
 #include <QImage>
+#include <QAudioOutput>
 #include "player.h"
 
 class QMLPlayer : public QQuickPaintedItem,public PlayerCallBack
@@ -20,11 +21,13 @@ public:
 private:
     void paint(QPainter *painter) override;
     void rowVideoData(unsigned char *data, int width, int height) override;
+    void rowAudioData(unsigned char *data, unsigned int size) override;
 
 private:
     QImage image;
     QString url;
     Player *player;
+    QIODevice *audioOutputIO;
 };
 
 #endif // QMLPLAYER_H

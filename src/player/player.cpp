@@ -12,7 +12,11 @@ extern "C"{
 
 Player::Player()
 {
-//    open( "C:\\Users\\cxl\\Videos\\VID_20200416_211528.mp4");
+    //    open( "C:\\Users\\cxl\\Videos\\VID_20200416_211528.mp4");
+}
+
+Player::~Player()
+{
 }
 
 int Player::open(const std::string &path)
@@ -45,8 +49,8 @@ int Player::open(const std::string &path)
             videoDecoder = make_unique<VideoDecoder>(i,pLocalCodecParameters);
         } else if (pLocalCodecParameters->codec_type == AVMEDIA_TYPE_AUDIO) {
             printf("Audio Codec: %d channels, sample rate %d", pLocalCodecParameters->channels, pLocalCodecParameters->sample_rate);
+            audioDecoder = make_unique<VideoDecoder>(i,pLocalCodecParameters);
         }
-        break;
     }
 
     readFThread = make_unique<thread>(&Player::readframe, this);
@@ -69,15 +73,15 @@ void Player::readframe()
 
     SwsContext *sws_conotext =  sws_getContext(width,height,
                                                videoDecoder->getAvCodecContext()->pix_fmt,
-                                               width,height,AV_PIX_FMT_RGBA,SWS_BICUBIC,NULL,NULL,NULL);
+                                               width,height,AV_PIX_FMT_RGB24,SWS_BICUBIC,NULL,NULL,NULL);
     AVFrame *yuvFrame = av_frame_alloc();
 
-    int size = av_image_get_buffer_size(AV_PIX_FMT_RGBA,width,height,1);
+    int size = av_image_get_buffer_size(AV_PIX_FMT_RGB24,width,height,1);
     uint8_t *buff = (uint8_t *)av_malloc(size);
-    av_image_fill_arrays(yuvFrame->data,yuvFrame->linesize,buff,AV_PIX_FMT_RGBA,width,height,1);
+    av_image_fill_arrays(yuvFrame->data,yuvFrame->linesize,buff,AV_PIX_FMT_RGB24,width,height,1);
     yuvFrame->width = width;
     yuvFrame->height = height;
-
+    int16_t* outputBuffer = NULL;
     while (av_read_frame(pFormatContext, pPacket) == 0) {
         if(pPacket->stream_index == videoDecoder->getStreamIndex()){
             if(avcodec_send_packet(videoDecoder->getAvCodecContext(), pPacket)){
@@ -88,6 +92,36 @@ void Player::readframe()
                 sws_scale(sws_conotext,pFrame->data,pFrame->linesize,0,height,yuvFrame->data,yuvFrame->linesize);
                 if(callBack)
                     callBack->rowVideoData(yuvFrame->data[0],yuvFrame->width,yuvFrame->height);
+            }
+        }else if(pPacket->stream_index == audioDecoder->getStreamIndex()){
+            if(avcodec_send_packet(audioDecoder->getAvCodecContext(), pPacket)){
+                logger()<<"error send packet!";
+                continue;
+            }
+            if(!avcodec_receive_frame(audioDecoder->getAvCodecContext(), pFrame)){
+                int in_samples = pFrame->nb_samples;
+                int i=0;
+                float* inputChannel0 = (float*)pFrame->extended_data[0];
+                if(!outputBuffer)
+                    outputBuffer = (int16_t*)av_malloc(pFrame->nb_samples * pFrame->channels);
+                // Mono
+                if (pFrame->channels==1) {
+                    for (i=0 ; i<in_samples ; i++) {
+                        float sample = *inputChannel0++;
+                        if (sample<-1.0f) sample=-1.0f; else if (sample>1.0f) sample=1.0f;
+                        outputBuffer[i] = (unsigned char) (sample * 32767.0f);
+                    }
+                }
+                // Stereo
+                else {
+                    float* inputChannel1 = (float*)pFrame->extended_data[1];
+                    for (i=0 ; i<in_samples ; i++) {
+                         outputBuffer[i*2] = (int16_t) ((*inputChannel0++) * 32767.0f);
+                         outputBuffer[i*2+1] = (int16_t) ((*inputChannel1++) * 32767.0f);
+                    }
+                }
+                if(callBack)
+                    callBack->rowAudioData((unsigned char*)outputBuffer,pFrame->nb_samples * pFrame->channels*2);
             }
         }
         av_packet_unref(pPacket);
