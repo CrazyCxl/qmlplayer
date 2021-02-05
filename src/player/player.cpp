@@ -103,7 +103,7 @@ void Player::readframe()
                 int i=0;
                 float* inputChannel0 = (float*)pFrame->extended_data[0];
                 if(!outputBuffer)
-                    outputBuffer = (int16_t*)av_malloc(pFrame->nb_samples * pFrame->channels);
+                    outputBuffer = (int16_t*)av_malloc(pFrame->nb_samples * pFrame->channels*2);
                 // Mono
                 if (pFrame->channels==1) {
                     for (i=0 ; i<in_samples ; i++) {
